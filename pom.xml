@@ -6,7 +6,7 @@
 
     <groupId>org.automacaoGU</groupId>
     <artifactId>automacao-goalunited</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <name>Automacao Goalunited</name>
 
     <properties>
@@ -21,21 +21,18 @@
             <artifactId>jnativehook</artifactId>
             <version>2.2.2</version>
         </dependency>
+
+        <!-- OpenCV via Bytedeco -->
         <dependency>
-            <groupId>org.openpnp</groupId>
-            <artifactId>opencv</artifactId>
-            <version>4.5.1-2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opencv</groupId>
-            <artifactId>opencv</artifactId>
-            <version>4.11.0</version>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>opencv-platform</artifactId>
+            <version>4.10.0-1.5.11</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Plugin para definir opções de execução com acesso nativo -->
+            <!-- Plugin para compilação -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -45,6 +42,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Plugin para execução -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

@@ -137,6 +137,9 @@ public class AutomacaoGoalunited {
             }
         });
 
+        JCheckBox incluirTerceiraPosicao = new JCheckBox("Incluir terceira posição");
+        incluirTerceiraPosicao.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel escLabel = new JLabel("Pressione ESC a qualquer momento para interromper.");
         escLabel.setForeground(Color.RED);
         escLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -151,9 +154,10 @@ public class AutomacaoGoalunited {
                 if (vezes < 1 || vezes > 99) throw new NumberFormatException();
                 Point[] coordenadas = eventoBtn.isSelected() ? COORDENADAS_EVENTO_GU :
                         (videoBtn.isSelected() ? COORDENADAS_VIDEOS_GU : COORDENADAS_TREINAMENTO_GU);
+                boolean incluir3 = incluirTerceiraPosicao.isSelected();
                 frame.setVisible(false);
                 coordenadasExecutadas.clear();
-                executarAutomacao(coordenadas, vezes);
+                executarAutomacao(coordenadas, vezes, incluir3);
                 frame.setVisible(true);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(frame, "Insira valores válidos.", "Erro", JOptionPane.ERROR_MESSAGE);
@@ -173,6 +177,8 @@ public class AutomacaoGoalunited {
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
         panel.add(repLabel);
         panel.add(repField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(incluirTerceiraPosicao);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(iniciarBtn);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -185,29 +191,35 @@ public class AutomacaoGoalunited {
         frame.setVisible(true);
     }
 
-    private static void executarAutomacao(Point[] coordenadas, int vezes) {
+    private static void executarAutomacao(Point[] coordenadas, int vezes, boolean pularSkipAtivado) {
         interrompido = false;
 
         for (int i = 0; i < vezes && !interrompido; i++) {
-            for (int j = 0; j < coordenadas.length && !interrompido; j++) {
+            delay(2000);
+            int limite = pularSkipAtivado ? coordenadas.length : Math.min(2, coordenadas.length);
+            for (int j = 0; j < limite && !interrompido; j++) {
                 Point p = coordenadas[j];
                 robot.mouseMove(p.x, p.y);
                 coordenadasExecutadas.add(new Point(p));
-                delay(3500);
+                delay(3000);
                 robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
                 robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
                 if (j == 1) {
-                    pressionarTeclaX10x();
-                    delay(5000);
+                    pressionarTeclaX(10);
+                }
+                if (pularSkipAtivado) {
+                    delay(6000);
                 }
             }
         }
+
         if (interrompido) {
             salvarCoordenadasEmArquivo();
             JOptionPane.showMessageDialog(null, "Processo interrompido pelo usuário. Coordenadas salvas em coordenadas_log.txt");
         } else {
             JOptionPane.showMessageDialog(null, "Processo executado com sucesso!");
         }
+
         try {
             GlobalScreen.unregisterNativeHook();
             hookRegistrado = false;
@@ -227,14 +239,15 @@ public class AutomacaoGoalunited {
         }
     }
 
-    private static void pressionarTeclaX10x() {
-        delay(2500);
-        for (int i = 0; i < 10; i++) {
+    private static void pressionarTeclaX(int vezes) {
+        delay(3500);
+        for (int i = 0; i < vezes; i++) {
             robot.keyPress(KeyEvent.VK_X);
-            delay(200);
+            delay(150);
             robot.keyRelease(KeyEvent.VK_X);
-            delay(500);
+            delay(150);
         }
+        delay(2000);
     }
 
     private static void delay(int ms) {
