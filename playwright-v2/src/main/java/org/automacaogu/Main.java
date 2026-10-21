@@ -61,7 +61,11 @@ public final class Main {
                             reader.setDaemon(true);reader.start();
                             while(!finished.get()) {canvas.checkStop();page.waitForTimeout(100);}
                         }
-                        default -> System.out.println("Diagnóstico salvo. Canvas compatível com a proporção 942 x 671.");
+                        default -> {
+                            String report = Visuals.trainingReport(canvas.snapshot());
+                            System.out.print(report);
+                            Files.writeString(run.resolve("recognition.txt"), report);
+                        }
                     }
                     canvas.save(run.resolve("after.png"));
                     System.out.println("Evidências: "+run.toAbsolutePath());

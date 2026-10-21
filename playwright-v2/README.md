@@ -6,12 +6,12 @@ Esta primeira versão executa **um slot de treinamento da segunda-feira por vez*
 
 ## Instalação
 
-No terminal, entre neste diretório:
+No PowerShell, CMD ou terminal, entre neste diretório (a raiz do repositório contém a versão antiga):
 
 ```sh
 cd playwright-v2
 mvn compile
-mvn exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium"
+mvn exec:java "-Dexec.mainClass=com.microsoft.playwright.CLI" "-Dexec.args=install chromium"
 ```
 
 O navegador abre com um perfil exclusivo, `.gu-profile`, e guarda sua sessão localmente. Faça login manualmente. Não aponte esse diretório para o perfil habitual do Chrome. Para usar o Chrome instalado, acrescente `--channel chrome` aos argumentos.
@@ -19,17 +19,17 @@ O navegador abre com um perfil exclusivo, `.gu-profile`, e guarda sua sessão lo
 ## Primeiro teste: diagnóstico sem automação
 
 ```sh
-mvn exec:java -Dexec.args="--flow diagnose"
+mvn exec:java "-Dexec.args=--flow diagnose"
 ```
 
-No navegador, abra **Time > Treinamento** e feche diálogos. Volte ao terminal e pressione ENTER. O aplicativo salva uma imagem normalizada do canvas em `runs/<data>/before.png` e `after.png` e encerra.
+No navegador, abra **Time > Treinamento** e feche diálogos. Volte ao terminal e pressione ENTER. O aplicativo salva uma imagem normalizada do canvas em `runs/<data>/before.png` e `after.png` e encerra. O terminal e `recognition.txt` informam se cada slot está disponível, concluído ou não reconhecido, junto com o erro visual medido.
 
-Use interface em **português**, zoom do navegador em **100%** e a janela fornecida pelo aplicativo. Os recortes visuais vêm das telas enviadas em 09/10/2026. O canvas de referência mede **942 × 671**; tamanhos com a mesma proporção são normalizados. Outras proporções, alterações no layout, fonte, idioma ou estado interrompem o fluxo para recalibração. Redimensionamento proporcional também precisa de validação local, pois o jogo pode reorganizar controles.
+Use interface em **português**, zoom do navegador em **100%** e a janela fornecida pelo aplicativo. Os recortes visuais vêm das telas enviadas em 09/10/2026, com referências adicionais do título e dos ícones disponíveis no Chromium capturadas em 21/10/2026. O limite de erro continua em 2,5%; o reconhecimento usa o melhor resultado entre as referências explícitas de cada recorte, na mesma posição. Os diálogos de recompensa/bônus e marcas de conclusão ainda precisam de validação nessa renderização. O canvas de referência mede **942 × 671**; tamanhos com a mesma proporção são normalizados. Outras proporções, alterações no layout, fonte, idioma ou estado interrompem o fluxo para recalibração. Redimensionamento proporcional também precisa de validação local, pois o jogo pode reorganizar controles.
 
 ## Treinamento: um ciclo
 
 ```sh
-mvn exec:java -Dexec.args="--flow training --slot 10 --bonus"
+mvn exec:java "-Dexec.args=--flow training --slot 10 --bonus"
 ```
 
 Faça login, abra **Time > Treinamento** manualmente e pressione ENTER no terminal. O aplicativo:
@@ -49,7 +49,7 @@ Interrompa com **Ctrl+C**, ou crie um arquivo vazio chamado **STOP** neste diret
 ## Localizar novos controles dentro do canvas
 
 ```sh
-mvn exec:java -Dexec.args="--flow map"
+mvn exec:java "-Dexec.args=--flow map"
 ```
 
 Depois de ENTER, clique normalmente no jogo. O terminal registra `GU_POINT x,y` relativo ao canvas 942 × 671. ENTER novamente encerra o mapeamento. O jogo recebe esses cliques: use apenas os controles que pretende executar. Os pontos (`points.log`) e as imagens inicial e final ficam em `runs/`.
