@@ -92,6 +92,18 @@ class BrowserTest {
         new TrainingFlow(canvas,video,Duration.ofSeconds(10)).run("10",true);
         assertEquals(0,((Number)page.evaluate("plays")).intValue());
     }
+    @Test void resumesFirstRewardAndPlaysOnlyTheBonusVideo() {
+        page.evaluate("() => {plays=1;reward();}");
+        int previous=((Number)page.evaluate("plays")).intValue();
+        new TrainingFlow(canvas,video,Duration.ofSeconds(10)).run("10",true,true);
+        assertEquals(1,((Number)page.evaluate("plays")).intValue()-previous);
+        assertEquals("done",page.evaluate("stage"));
+    }
+    @Test void refusesResumeWhenFirstRewardIsNotVisible() {
+        assertThrows(IllegalStateException.class,()->new TrainingFlow(canvas,video,Duration.ofSeconds(10)).run("10",true,true));
+        assertEquals(0,((Number)page.evaluate("plays")).intValue());
+        assertEquals("ready",page.evaluate("stage"));
+    }
     @Test void syntheticEndedIsNotAccepted() {
         video.arm();
         page.evaluate("() => {const v=document.createElement('video');document.querySelector('#guVideoContainer').appendChild(v);v.dispatchEvent(new Event('playing'));v.dispatchEvent(new Event('ended'));}");
@@ -110,5 +122,16 @@ class BrowserTest {
         Files.createFile(temp.resolve("STOP"));
         assertThrows(IllegalStateException.class,()->canvas.click(505,311,Visuals.slot("10",false)));
         assertEquals(0,((Number)page.evaluate("plays")).intValue());
+    }
+    @Test void savesLastCheckedCanvasEvenWhenPageChangesOrStopIsSet() throws Exception {
+        canvas.snapshot();
+        page.evaluate("() => draw(['bonus-label','bonus-button'])");
+        Files.createFile(temp.resolve("STOP"));
+        var evidence=temp.resolve("error-canvas.png");
+        canvas.saveLastSnapshot(evidence);
+        var saved=javax.imageio.ImageIO.read(evidence.toFile());
+        assertTrue(Visuals.matches(saved,Visuals.slot("10",false)));
+        assertFalse(Visuals.matches(saved,Visuals.BONUS));
+        assertTrue(Files.readString(temp.resolve("canvas.txt")).contains("normalizada: 942 x 671"));
     }
 }

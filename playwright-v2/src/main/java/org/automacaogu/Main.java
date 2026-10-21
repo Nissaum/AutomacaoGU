@@ -13,6 +13,8 @@ public final class Main {
         if(options.containsKey("help")) {help();return;}
         String flow=options.getOrDefault("flow","diagnose");
         if(!Set.of("diagnose","map","training").contains(flow)) throw new IllegalArgumentException("Fluxo inválido: "+flow);
+        if(options.containsKey("resume-reward") && !flow.equals("training"))
+            throw new IllegalArgumentException("--resume-reward exige --flow training.");
         String slot=options.getOrDefault("slot","10");
         Visuals.slot(slot,false); // validate before browser is launched
         long videoSeconds=Long.parseLong(options.getOrDefault("video-timeout","180"));
@@ -30,14 +32,16 @@ public final class Main {
                 page.navigate(options.getOrDefault("url","https://game.goalunited.org/html5/index.php"));
                 var canvas=new CanvasDriver(page,stop);
                 try {
-                    System.out.println("Faça login manualmente. Para training, abra Time > Treinamento e deixe a tela sem diálogos.");
+                    System.out.println(options.containsKey("resume-reward")
+                            ? "Faça login e deixe aberta a PRIMEIRA recompensa do slot " + slot + ":00 de segunda-feira, sem coletar."
+                            : "Faça login manualmente. Para training, abra Time > Treinamento e deixe a tela sem diálogos.");
                     System.out.println("Pressione ENTER aqui quando estiver pronto. Para interromper: Ctrl+C ou arquivo STOP.");
                     var input=new BufferedReader(new InputStreamReader(System.in));
                     if(input.readLine()==null) throw new IllegalStateException("Console sem entrada interativa.");
                     canvas.save(run.resolve("before.png"));
                     switch(flow) {
                         case "training" -> new TrainingFlow(canvas,new VideoMonitor(page,canvas::checkStop),Duration.ofSeconds(videoSeconds))
-                                .run(slot,options.containsKey("bonus"));
+                                .run(slot,options.containsKey("bonus"),options.containsKey("resume-reward"));
                         case "map" -> {
                             page.onConsoleMessage(msg -> {
                                 if(msg.text().startsWith("GU_POINT ")) {
@@ -70,6 +74,7 @@ public final class Main {
                     canvas.save(run.resolve("after.png"));
                     System.out.println("Evidências: "+run.toAbsolutePath());
                 } catch(Exception e) {
+                    try {canvas.saveLastSnapshot(run.resolve("error-canvas.png"));} catch(Exception ignored) {}
                     try {page.screenshot(new Page.ScreenshotOptions().setPath(run.resolve("error.png")));} catch(Exception ignored) {}
                     Files.writeString(run.resolve("error.txt"),e.toString());
                     throw e;
@@ -79,7 +84,7 @@ public final class Main {
     }
     static Map<String,String> parse(String[] args) {
         var result=new HashMap<String,String>();
-        Set<String> flags=Set.of("bonus","help"),values=Set.of("flow","slot","url","channel","video-timeout");
+        Set<String> flags=Set.of("bonus","help","resume-reward"),values=Set.of("flow","slot","url","channel","video-timeout");
         for(int i=0;i<args.length;i++) {
             if(!args[i].startsWith("--")) throw new IllegalArgumentException("Argumento inválido: "+args[i]);
             String key=args[i].substring(2);
@@ -96,6 +101,7 @@ public final class Main {
             --flow diagnose|map|training   (padrão: diagnose, sem cliques automáticos)
             --slot 10|12                  segunda-feira, um slot por execução
             --bonus                       assistir também o segundo vídeo
+            --resume-reward               retomar na PRIMEIRA recompensa já aberta do slot informado
             --video-timeout 180            máximo por vídeo em segundos, 1..600
             --channel chrome              opcional: Chrome instalado em vez de Chromium
             --url URL                     padrão: https://game.goalunited.org/html5/index.php

@@ -24,7 +24,7 @@ mvn exec:java "-Dexec.args=--flow diagnose"
 
 No navegador, abra **Time > Treinamento** e feche diálogos. Volte ao terminal e pressione ENTER. O aplicativo salva uma imagem normalizada do canvas em `runs/<data>/before.png` e `after.png` e encerra. O terminal e `recognition.txt` informam se cada slot está disponível, concluído ou não reconhecido, junto com o erro visual medido.
 
-Use interface em **português**, zoom do navegador em **100%** e a janela fornecida pelo aplicativo. Os recortes visuais vêm das telas enviadas em 09/10/2026, com referências adicionais do título e dos ícones disponíveis no Chromium capturadas em 21/10/2026. O limite de erro continua em 2,5%; o reconhecimento usa o melhor resultado entre as referências explícitas de cada recorte, na mesma posição. Os diálogos de recompensa/bônus e marcas de conclusão ainda precisam de validação nessa renderização. O canvas de referência mede **942 × 671**; tamanhos com a mesma proporção são normalizados. Outras proporções, alterações no layout, fonte, idioma ou estado interrompem o fluxo para recalibração. Redimensionamento proporcional também precisa de validação local, pois o jogo pode reorganizar controles.
+Use interface em **português**, zoom do navegador em **100%** e a janela fornecida pelo aplicativo. Os recortes visuais vêm das telas enviadas em 09/10/2026, com referências adicionais do título e dos ícones disponíveis no Chromium capturadas em 21/10/2026. O limite de erro continua em 2,5%; o reconhecimento usa o melhor resultado entre as referências explícitas de cada recorte, na mesma posição. O primeiro diálogo de recompensa também tem referências da captura real de 21/10. A oferta de bônus e as marcas de conclusão ainda precisam de validação nessa renderização. O canvas de referência mede **942 × 671**; tamanhos com a mesma proporção são normalizados. Outras proporções, alterações no layout, fonte, idioma ou estado interrompem o fluxo para recalibração. Redimensionamento proporcional também precisa de validação local, pois o jogo pode reorganizar controles.
 
 ## Treinamento: um ciclo
 
@@ -40,11 +40,19 @@ Faça login, abra **Time > Treinamento** manualmente e pressione ENTER no termin
 4. Reconhece a oferta do segundo vídeo; com `--bonus`, assiste e coleta também essa recompensa.
 5. Confirma a marca de conclusão no slot e encerra.
 
-Para o segundo slot, use `--slot 12`. Sem `--bonus`, a oferta é fechada após a primeira recompensa. Um slot que já mostra a marca de conclusão não será acionado novamente. Essa versão não recupera um bônus pendente de uma execução anterior; encerra ou recusa o estado para inspeção manual.
+Para o segundo slot, use `--slot 12`. Sem `--bonus`, a oferta é fechada após a primeira recompensa. Um slot que já mostra a marca de conclusão não será acionado novamente. Essa versão não recupera um bônus pendente de uma execução anterior; encerra ou recusa o estado para inspeção manual. Para retomar especificamente na **primeira recompensa já aberta** de um slot conhecido, use a opção abaixo.
+
+Se uma execução parou após o primeiro vídeo e o jogo ainda apresentar a primeira recompensa desse slot, deixe o diálogo aberto e execute:
+
+```sh
+mvn compile exec:java "-Dexec.args=--flow training --slot 10 --bonus --resume-reward"
+```
+
+Pressione ENTER apenas com essa primeira recompensa aberta, sem coletá-la manualmente. A retomada exige o diálogo reconhecido, coleta e segue para a oferta do bônus; não solicita novamente o primeiro vídeo. A opção não restaura diálogos após recarregar o jogo, não identifica o slot por trás do modal e não serve para a recompensa do segundo vídeo. Só a use quando souber qual slot gerou essa primeira recompensa. Se o diálogo não estiver visível, a retomada recusa a tela sem clicar. Para um novo slot disponível, execute sem `--resume-reward`.
 
 O tempo máximo é 180 segundos **por vídeo**, configurável com `--video-timeout 240` (máximo 600). Há limites de 30 segundos para o início, 45 segundos sem progresso e 20 segundos para cada transição de tela. Vídeo indisponível, erro no player ou diálogo diferente interrompe a execução; nenhum clique é repetido automaticamente. Se o player exigir fechar uma janela após o término e o jogo não abrir a recompensa sozinho, o fluxo para; esse estado ainda precisa ser mapeado.
 
-Interrompa com **Ctrl+C**, ou crie um arquivo vazio chamado **STOP** neste diretório. Remova STOP antes da próxima execução. Em erro, `runs/<data>/error.png` e `error.txt` registram o contexto. Capturas e perfil ficam fora do Git e podem conter dados da conta.
+Interrompa com **Ctrl+C**, ou crie um arquivo vazio chamado **STOP** neste diretório. Remova STOP antes da próxima execução. Em erro, `runs/<data>/error.png` mostra a página inteira, `error-canvas.png` preserva a última imagem normalizada realmente verificada e `canvas.txt` registra as dimensões CSS/capturadas. `error.txt` registra a exceção, incluindo erros por recorte nos limites de espera. Para calibrar novos recortes, prefira `error-canvas.png` em vez de recortar manualmente a captura da página inteira. Capturas e perfil ficam fora do Git e podem conter dados da conta.
 
 ## Localizar novos controles dentro do canvas
 
@@ -84,6 +92,8 @@ Para adicionar uma tela, recorte áreas estáveis de `before.png` (título, bot�
 ```sh
 mvn test
 ```
+
+A referência de recompensa do Chromium foi reconstruída a partir da captura de página de 21/10, alinhando-a ao canvas antes do vídeo; a coleta real ainda precisa de confirmação. Os testes verificam esse recorte independentemente do prêmio variável e a retomada explícita sem repetir o primeiro vídeo.
 
 Os testes abrem Chromium headless com uma página local e um WebM de um segundo, sem acessar o jogo. Exercitam duas reproduções reais, um ciclo sem bônus, slot já concluído, tela incorreta, interrupção, player removido e evento `ended` sintético. Também verificam a transformação de coordenadas e a distinção visual dos ícones.
 

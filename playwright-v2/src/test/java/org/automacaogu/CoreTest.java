@@ -43,9 +43,23 @@ class CoreTest {
         }
     }
     @Test void cliRejectsTyposMissingValuesAndDuplicates() {
+        assertEquals("true",Main.parse(new String[]{"--flow","training","--resume-reward"}).get("resume-reward"));
         assertEquals("12",Main.parse(new String[]{"--flow","training","--slot","12","--bonus"}).get("slot"));
         assertThrows(IllegalArgumentException.class,()->Main.parse(new String[]{"--slots","12"}));
         assertThrows(IllegalArgumentException.class,()->Main.parse(new String[]{"--slot"}));
         assertThrows(IllegalArgumentException.class,()->Main.parse(new String[]{"--bonus","--bonus"}));
+    }
+    @Test void recognizesRealRewardCaptureIndependentlyOfPrize() throws Exception {
+        try (var in = getClass().getResourceAsStream("/reward-windows.png")) {
+            var screen = ImageIO.read(in);
+            assertTrue(Visuals.matches(screen, Visuals.REWARD));
+            assertFalse(Visuals.matches(screen, Visuals.BONUS));
+            assertFalse(Visuals.matches(screen, Visuals.slot("10", false)));
+            var g = screen.createGraphics();
+            g.setColor(java.awt.Color.MAGENTA);
+            g.fillRect(302, 305, 335, 90); // variable prize area
+            g.dispose();
+            assertTrue(Visuals.matches(screen, Visuals.REWARD));
+        }
     }
 }

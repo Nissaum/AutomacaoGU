@@ -12,15 +12,25 @@ public final class TrainingFlow {
     }
     /** One explicitly selected Monday slot, at most two videos. */
     public void run(String slot,boolean bonus) {
+        run(slot, bonus, false);
+    }
+    /** Resume only the first reward explicitly identified by the operator. */
+    public void run(String slot,boolean bonus,boolean resumeReward) {
         var ready=Visuals.slot(slot,false);
         var done=Visuals.slot(slot,true);
-        if (Visuals.matches(canvas.snapshot(),done)) {
-            System.out.println("Slot já concluído. Nenhum vídeo solicitado.");return;
+        if (resumeReward) {
+            if (!Visuals.matches(canvas.snapshot(), Visuals.REWARD))
+                throw new IllegalStateException("Para retomar, deixe aberta a primeira recompensa do slot selecionado. Nenhum clique foi feito.");
+            System.out.println("Retomando na primeira recompensa visível, sem solicitar o primeiro vídeo.");
+        } else {
+            if (Visuals.matches(canvas.snapshot(),done)) {
+                System.out.println("Slot já concluído. Nenhum vídeo solicitado.");return;
+            }
+            canvas.await(ready,SCREEN_TIMEOUT,"segunda-feira "+slot+":00 disponível");
+            video.arm();
+            canvas.click(505,slot.equals("10")?311:371,ready);
+            video.awaitCompletion(videoLimit);
         }
-        canvas.await(ready,SCREEN_TIMEOUT,"segunda-feira "+slot+":00 disponível");
-        video.arm();
-        canvas.click(505,slot.equals("10")?311:371,ready);
-        video.awaitCompletion(videoLimit);
         collect();
         canvas.await(Visuals.BONUS,SCREEN_TIMEOUT,"oferta de segundo vídeo");
         if(bonus) {
