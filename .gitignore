@@ -27,3 +27,12 @@ replay_pid*
 /.idea
 *.iml
 coordenadas_log.txt
+
+# Java + Playwright: perfil, evidências e dados de sessão
+/playwright-v2/target/
+/playwright-v2/.gu-profile/
+/playwright-v2/runs/
+/playwright-v2/STOP
+/.gu-profile/
+/runs/
+/STOP

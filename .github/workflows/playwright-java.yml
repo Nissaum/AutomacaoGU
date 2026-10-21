@@ -1,0 +1,31 @@
+name: Java + Playwright
+on:
+  push:
+    paths: ['playwright-v2/**', '.github/workflows/playwright-java.yml']
+  pull_request:
+    paths: ['playwright-v2/**', '.github/workflows/playwright-java.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: playwright-v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: playwright-v2/pom.xml
+      - run: mvn -B compile
+      - run: mvn -B exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+      - run: mvn -B test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: playwright-v2/target/surefire-reports/
